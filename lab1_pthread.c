@@ -24,6 +24,8 @@ void updateCentroiddb(int K, float ** currentcentroid);
 void * classify(void *);
 float dist(int c,int d);
 int updateCentroid();
+float* tempmeans;
+int* freqmeans;
 struct classifyThreadData{
     int N;
     int K;
@@ -46,11 +48,13 @@ void kmeans_pthread(int num_threads,
         Ng = N;
         Kg = K;
         num_threadsg=num_threads;
-        data_pointsg= (int*)malloc(sizeof(int)*3*N);
+        data_pointsg= new int[3*N];
+        tempmeans = new float[Kg*3];
+        freqmeans = new int[Kg];
         for(int i=0;i<3*N;i++){
             data_pointsg[i] = data_points[i];
         }
-        data_point_clusterg = (int *)malloc(sizeof(int)*N*4);
+        data_point_clusterg = new int[4*N];
         int maxiter=10000;
         centroiddatabase.reserve((maxiter+1)*3*K);
         // cout <<"n is "<<N<<endl;
@@ -66,7 +70,7 @@ void kmeans_pthread(int num_threads,
             (data_point_clusterg)[4*i+3] = 0;
         }
         //initialize centroids
-        currentcentroid = (float*)malloc(sizeof(float)*K*3);
+        currentcentroid = new float[3*K];
         int* tempmeanindex = new int[N];
         for(int i=0;i<N;i++){
             tempmeanindex[i] = i;
@@ -83,9 +87,9 @@ void kmeans_pthread(int num_threads,
         int threschanges=1;
         //  start the loop
         int tempiter=0;
-        classifychanges = (int *)malloc(sizeof(int)*num_threads);
+        classifychanges = new int[num_threadsg];
         pthread_t threads[num_threads];
-        int * tid = (int *)malloc(sizeof(int)*num_threadsg);
+        int * tid = new int[num_threadsg];
         for(int i=0;i<num_threads;i++){
             tid[i]=i;
         }
@@ -97,27 +101,27 @@ void kmeans_pthread(int num_threads,
             for(int j=0;j<num_threads;j++){
                 // classtd[j].N=N;
                 // classtd
-                cout << "creating thread "<< &threads[j] << endl;
+                // cout << "creating thread "<< &threads[j] << endl;
                 pthread_create(&threads[j], NULL, classify, (&tid[j]));
-                cout << "created thread "<< &threads[j] << endl;
+                // cout << "created thread "<< &threads[j] << endl;
 
                 // int numchanges1 = classify();
             }
             for(int j=0;j<num_threadsg;j++){
-                cout << "joining thread "<< &threads[j] << endl;
+                // cout << "joining thread "<< &threads[j] << endl;
 
                 pthread_join(threads[j],NULL);
-                cout << "joined thread "<< &threads[j] << endl;
+                // cout << "joined thread "<< &threads[j] << endl;
 
             }
             for(int j=0;j<num_threadsg;j++){
                 numchanges1 +=classifychanges[j];
             }
-            cout << "do updatecentroid function"<<endl;
+            // cout << "do updatecentroid function"<<endl;
             int numchanges2 = updateCentroid();
-            cout << "update centroid done then updatedb"<<endl;
+            // cout << "update centroid done then updatedb"<<endl;
             updateCentroiddb(K, &currentcentroid);
-            cout << "update db done"<<endl;
+            // cout << "update db done"<<endl;
             if(numchanges1<threschanges && numchanges2<threschanges){
                 break;
             }
@@ -125,31 +129,31 @@ void kmeans_pthread(int num_threads,
         // cout << "tempiter is "<< tempiter<<endl;
         *num_iterations= tempiter+1;
         // cout<<"num_iterations is "<<num_iterations <<" vector size is "<< << endl;
-        *centroids=(float*)malloc(sizeof(float)*(centroiddatabase.size()));
+        *centroids=new float[centroiddatabase.size()];
         for(int i=0;i<centroiddatabase.size();i++){
             (*centroids)[i] = centroiddatabase[i];
         }
-        *data_point_cluster = (int*)malloc(sizeof(int)*N*4);
+        *data_point_cluster = new int[4*N];
         for(int i=0;i<4*N;i++){
             (*data_point_cluster)[i]=data_point_clusterg[i];
         }
         return;
     }
 void updateCentroiddb(int K, float ** currentcentroidyo){
-                cout << "calling updatecentroid"<<endl;
+                // cout << "calling updatecentroid"<<endl;
 
     for(int i=0;i<K;i++){
         for(int j=0;j<3;j++){
-            cout << "whats the mfing problem"<<endl;
+            // cout << "whats the mfing problem"<<endl;
             float temp = (*currentcentroidyo)[3*i+j];
-            cout << "lets add "<< temp<<endl;
-            cout << "vector size is "<<centroiddatabase.size()<< " capacity is "<<centroiddatabase.capacity()<<endl;
+            // cout << "lets add "<< temp<<endl;
+            // cout << "vector size is "<<centroiddatabase.size()<< " capacity is "<<centroiddatabase.capacity()<<endl;
             centroiddatabase.push_back(temp);
         }
     }
 }
 void * classify(void * stid){
-    cout << "beginning" << endl;
+    // cout << "beginning" << endl;
     int* itid=(int*)stid;
     int numchanges =0;
     int beginctr = (*itid)*(Ng/num_threadsg);
@@ -175,7 +179,7 @@ void * classify(void * stid){
         }
     }
     classifychanges[*itid]=numchanges;
-    cout << "exiting"<<endl;
+    // cout << "exiting"<<endl;
     return NULL;
 }
 float dist(int c,int d){
@@ -187,8 +191,7 @@ float dist(int c,int d){
 }
 int updateCentroid(){
     int numchanges =0;
-    float* tempmeans = new float[Kg*3];
-    int* freqmeans = new int[Kg];
+
     for(int i=0;i<Kg;i++){
         for(int j=0;j<3;j++){
             tempmeans[3*i+j]=0;
