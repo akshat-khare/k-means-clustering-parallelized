@@ -89,10 +89,8 @@ void kmeans_pthread(int num_threads,
         int tempiter=0;
         classifychanges = new int[num_threadsg];
         pthread_t threads[num_threads];
-        int * tid = new int[num_threadsg];
-        for(int i=0;i<num_threads;i++){
-            tid[i]=i;
-        }
+        
+            int * tid = new int[num_threads];
         for(int i=0; i< maxiter;i++){
             tempiter=i;
             // cout << "this is " << i << " iteration"<<endl;
@@ -101,17 +99,18 @@ void kmeans_pthread(int num_threads,
             for(int j=0;j<num_threads;j++){
                 // classtd[j].N=N;
                 // classtd
-                // cout << "creating thread "<< &threads[j] << endl;
-                pthread_create(&threads[j], NULL, classify, (&tid[j]));
-                // cout << "created thread "<< &threads[j] << endl;
+                tid[j]=j;
+                cout << "creating thread "<< &threads[j] << " iteration "<<i<<" thread number "<<j << endl;
+                pthread_create(&threads[j], NULL, classify,(void *) (&tid[j]));
+                cout << "created thread " << &threads[j] << " iteration "<<i<<" thread number "<<j << endl;
 
                 // int numchanges1 = classify();
             }
-            for(int j=0;j<num_threadsg;j++){
-                // cout << "joining thread "<< &threads[j] << endl;
+            for(int j=0;j<num_threads;j++){
+                cout << "joining thread "<< &threads[j] << " iteration "<<i<<" thread number "<<j << endl;
 
                 pthread_join(threads[j],NULL);
-                // cout << "joined thread "<< &threads[j] << endl;
+                cout << "joined thread "<< &threads[j] << " iteration "<<i<<" thread number "<<j << endl;
 
             }
             for(int j=0;j<num_threadsg;j++){
