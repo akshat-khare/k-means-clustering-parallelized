@@ -1,4 +1,4 @@
-#include "lab1_pthread.h"
+#include "lab1_omp.h"
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -21,7 +21,7 @@ int num_threadsg;
 int * data_pointsg;
 int * data_point_clusterg;
 void updateCentroiddb(int K, float ** currentcentroid);
-void * classify(void *);
+void classify(int);
 float dist(int c,int d);
 int updateCentroid();
 float* tempmeans;
@@ -32,7 +32,7 @@ struct classifyThreadData{
     int ** data_points;
     int ** data_point_cluster;
 };
-void kmeans_pthread(int num_threads,
+void kmeans_omp(int num_threads,
 					int N,
 					int K,
 					int* data_points,
@@ -89,30 +89,16 @@ void kmeans_pthread(int num_threads,
         //  start the loop
         int tempiter=0;
         classifychanges = new int[num_threadsg];
-        pthread_t threads[num_threads];
-        
-            int * tid = new int[num_threads];
+        int * tid = new int[num_threads];
         for(int i=0; i< maxiter;i++){
             tempiter=i;
             // cout << "this is " << i << " iteration"<<endl;
             // struct classifyThreadData classtd[num_threads];
             int numchanges1=0;
-            for(int j=0;j<num_threads;j++){
-                // classtd[j].N=N;
-                // classtd
-                tid[j]=j;
-                // cout << "creating thread "<< &threads[j] << " iteration "<<i<<" thread number "<<j << endl;
-                pthread_create(&threads[j], NULL, classify,(void *) (&tid[j]));
-                // cout << "created thread " << &threads[j] << " iteration "<<i<<" thread number "<<j << endl;
-
-                // int numchanges1 = classify();
-            }
-            for(int j=0;j<num_threads;j++){
-                // cout << "joining thread "<< &threads[j] << " iteration "<<i<<" thread number "<<j << endl;
-
-                pthread_join(threads[j],NULL);
-                // cout << "joined thread "<< &threads[j] << " iteration "<<i<<" thread number "<<j << endl;
-
+            #pragma omp parallel num_threads(num_threads)
+            {
+                int id = omp_get_thread_num();
+                classify(id);
             }
             for(int j=0;j<num_threadsg;j++){
                 numchanges1 +=classifychanges[j];
@@ -152,14 +138,13 @@ void updateCentroiddb(int K, float ** currentcentroidyo){
         }
     }
 }
-void * classify(void * stid){
+void classify(int id){
     // cout << "beginning" << endl;
-    int* itid=(int*)stid;
     int numchanges =0;
-    int beginctr = (*itid)*(Ng/num_threadsg);
+    int beginctr = (id)*(Ng/num_threadsg);
     int endctr;
-    if(*itid!=num_threadsg-1){
-        endctr = (*itid + 1)*(Ng/num_threadsg);
+    if(id!=num_threadsg-1){
+        endctr = (id + 1)*(Ng/num_threadsg);
     }else{
         endctr=Ng;
     }
@@ -178,9 +163,9 @@ void * classify(void * stid){
             (data_point_clusterg)[4*i+3]=tempbelongsto;
         }
     }
-    classifychanges[*itid]=numchanges;
+    classifychanges[id]=numchanges;
     // cout << "exiting"<<endl;
-    return NULL;
+    return;
 }
 float dist(int c,int d){
     float temp=0;

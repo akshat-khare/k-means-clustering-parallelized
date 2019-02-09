@@ -46,6 +46,7 @@ void kmeans_sequential(int N,
         for(int i=0;i<N;i++){
             tempmeanindex[i] = i;
         }
+        std::srand ( unsigned ( std::time(0) ) );
         random_shuffle(tempmeanindex, tempmeanindex+N);
         
         for(int i=0;i<K;i++){
@@ -126,8 +127,8 @@ int updateCentroid(int N, int K, int ** data_points, int ** data_point_cluster){
     for(int i=0;i<N;i++){
         int tempbelongsto = (*data_point_cluster)[4*i+3];
         for(int j=0;j<3;j++){
-            tempmeans[3*tempbelongsto+j]=(*data_points)[3*i+j];
-            freqmeans[i] +=1;
+            tempmeans[3*tempbelongsto+j]+=(*data_points)[3*i+j];
+            freqmeans[tempbelongsto] +=1;
         }
     }
     for(int i=0;i<K;i++){
