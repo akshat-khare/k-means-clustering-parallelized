@@ -200,9 +200,9 @@ int updateCentroid(){
     for(int i=0;i<Ng;i++){
         int tempbelongsto = (data_point_clusterg)[4*i+3];
         for(int j=0;j<3;j++){
-            tempmeans[3*tempbelongsto+j]=(data_pointsg)[3*i+j];
-            freqmeans[i] +=1;
+            tempmeans[3*tempbelongsto+j]+=(data_pointsg)[3*i+j];
         }
+        freqmeans[tempbelongsto] +=1;
     }
     for(int i=0;i<Kg;i++){
         bool shouldchange=false;
