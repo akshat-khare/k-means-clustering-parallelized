@@ -1,0 +1,2 @@
+g++ -g -o seq main_sequential.c lab1_io.c lab1_sequential.c
+./seq 2 ../dataset_6_2.txt ../testclusterpoint.txt ../testcentroids.txt
