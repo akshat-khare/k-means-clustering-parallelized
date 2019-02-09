@@ -75,6 +75,7 @@ void kmeans_pthread(int num_threads,
         for(int i=0;i<N;i++){
             tempmeanindex[i] = i;
         }
+        std::srand ( unsigned ( std::time(0) ) );
         random_shuffle(tempmeanindex, tempmeanindex+N);
         
         for(int i=0;i<K;i++){
