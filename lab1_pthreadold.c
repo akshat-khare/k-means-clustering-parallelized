@@ -32,6 +32,15 @@ struct classifyThreadData{
     int ** data_points;
     int ** data_point_cluster;
 };
+float checkcorrect(){
+    float temp=0;
+    for(int i=0;i<Ng;i++){
+        for(int j=0;j<3;j++){
+            temp += pow(data_point_clusterg[4*i+j]-currentcentroid[3*(data_point_clusterg[4*i+3])+j],2);
+        }
+    }
+    return temp;
+}
 void kmeans_pthread(int num_threads,
 					int N,
 					int K,
@@ -137,6 +146,7 @@ void kmeans_pthread(int num_threads,
         for(int i=0;i<4*N;i++){
             (*data_point_cluster)[i]=data_point_clusterg[i];
         }
+        // cout << "correctness is "<< checkcorrect()<<endl;
         return;
     }
 void updateCentroiddb(int K, float ** currentcentroidyo){
@@ -148,9 +158,12 @@ void updateCentroiddb(int K, float ** currentcentroidyo){
             float temp = (*currentcentroidyo)[3*i+j];
             // cout << "lets add "<< temp<<endl;
             // cout << "vector size is "<<centroiddatabase.size()<< " capacity is "<<centroiddatabase.capacity()<<endl;
+            // cout << temp <<" ";
             centroiddatabase.push_back(temp);
         }
+        // cout << " , ";
     }
+    // cout << endl;
 }
 void * classify(void * stid){
     // cout << "beginning" << endl;

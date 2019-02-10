@@ -16,6 +16,7 @@ void updateCentroiddb(int K);
 int classify(int N,int K,int ** data_points, int ** data_point_cluster);
 float dist(int c,int d, int ** data_points);
 int updateCentroid(int N, int K, int ** data_points, int ** data_point_cluster);
+
 void kmeans_sequential(int N,
 					int K,
 					int* data_points,
@@ -77,6 +78,19 @@ void kmeans_sequential(int N,
         for(int i=0;i<centroiddatabase.size();i++){
             (*centroids)[i] = centroiddatabase[i];
         }
+
+
+
+            float temp=0;
+            for(int i=0;i<N;i++){
+                for(int j=0;j<3;j++){
+                    temp += pow((*data_point_cluster)[4*i+j]-(currentcentroid)[3*((*data_point_cluster)[4*i+3])+j],2);
+                }
+            }
+            // return temp;
+            cout << "correctness is "<<temp<<endl;
+
+
         return;
     }
 void updateCentroiddb(int K){
@@ -128,8 +142,8 @@ int updateCentroid(int N, int K, int ** data_points, int ** data_point_cluster){
         int tempbelongsto = (*data_point_cluster)[4*i+3];
         for(int j=0;j<3;j++){
             tempmeans[3*tempbelongsto+j]+=(*data_points)[3*i+j];
-            freqmeans[tempbelongsto] +=1;
         }
+            freqmeans[tempbelongsto] +=1;
     }
     for(int i=0;i<K;i++){
         bool shouldchange=false;
