@@ -13,9 +13,15 @@ using namespace std;
 vector<float> centroiddatabase;
 float* currentcentroid;
 void updateCentroiddb(int K);
-int classify(int N,int K,int ** data_points, int ** data_point_cluster);
-float dist(int c,int d, int ** data_points);
-int updateCentroid(int N, int K, int ** data_points, int ** data_point_cluster);
+int classify();
+float dist(int c,int d);
+int updateCentroid();
+int Ng;
+int Kg;
+int * data_pointsg;
+int * data_point_clusterg;
+float* tempmeans;
+int* freqmeans;
 void kmeans_sequential(int N,
 					int K,
 					int* data_points,
@@ -27,18 +33,28 @@ void kmeans_sequential(int N,
         // cout << "iterations are"<<endl;
         // cout << *num_iterations<<endl;
         //initialize data_point_cluster
-        *data_point_cluster = (int*)malloc(sizeof(int)*((N)*4));
         // cout <<"n is "<<N<<endl;
         // *data_point_cluster= new int[4*N];
+        Ng = N;
+        Kg = K;
+        data_pointsg= new int[3*N];
+        tempmeans = new float[Kg*3];
+        freqmeans = new int[Kg];
+        for(int i=0;i<3*N;i++){
+            data_pointsg[i] = data_points[i];
+        }
+        data_point_clusterg = new int[4*N];
+        int maxiter=10000;
+        centroiddatabase.reserve((maxiter+1)*3*K);
         for(int i=0;i<N;i++){
             for(int j=0;j<3;j++){
                 // cout << "i is "<<i<< " j is "<<j<<endl;
-                int temp1= data_points[3*i+j];
-                int temp2= (*data_point_cluster)[4*i+j];
+                int temp1= data_pointsg[3*i+j];
+                int temp2= (data_point_clusterg)[4*i+j];
                 // cout << "temp1 is "<<temp1<< " temp2 is "<<temp2<<endl;
-                (*data_point_cluster)[4*i+j]=data_points[3*i+j];
+                (data_point_clusterg)[4*i+j]=data_pointsg[3*i+j];
             }
-            (*data_point_cluster)[4*i+3] = 0;
+            (data_point_clusterg)[4*i+3] = 0;
         }
         //initialize centroids
         currentcentroid = (float*)malloc(sizeof(float)*K*3);
@@ -51,20 +67,19 @@ void kmeans_sequential(int N,
         
         for(int i=0;i<K;i++){
             for(int j=0;j<3;j++){
-                currentcentroid[3*i+j] = data_points[3*(tempmeanindex[i])+j];
+                currentcentroid[3*i+j] = data_pointsg[3*(tempmeanindex[i])+j];
             }
         }
         // put the centroids in vector
         updateCentroiddb(K);
-        int maxiter=10000;
         int threschanges=1;
         //  start the loop
         int tempiter=0;
         for(int i=0; i< maxiter;i++){
             tempiter=i;
             // cout << "this is " << i << " iteration"<<endl;
-            int numchanges1 = classify(N,K, &data_points, data_point_cluster);
-            int numchanges2 = updateCentroid(N,K, &data_points, data_point_cluster);
+            int numchanges1 = classify();
+            int numchanges2 = updateCentroid();
             updateCentroiddb(K);
             if(numchanges1<threschanges && numchanges2<threschanges){
                 break;
@@ -77,6 +92,10 @@ void kmeans_sequential(int N,
         for(int i=0;i<centroiddatabase.size();i++){
             (*centroids)[i] = centroiddatabase[i];
         }
+        *data_point_cluster = new int[4*N];
+        for(int i=0;i<4*N;i++){
+            (*data_point_cluster)[i]=data_point_clusterg[i];
+        }
         return;
     }
 void updateCentroiddb(int K){
@@ -88,50 +107,48 @@ void updateCentroiddb(int K){
         }
     }
 }
-int classify(int N,int K,int ** data_points, int ** data_point_cluster){
+int classify(){
     int numchanges =0;
-    for(int i=0;i<N;i++){
+    for(int i=0;i<Ng;i++){
         float tempdist = numeric_limits<float>::max();
         int tempbelongsto = -1;
-        for(int j=0;j<K;j++){
-            float thisdist= dist(j,i,data_points);
+        for(int j=0;j<Kg;j++){
+            float thisdist= dist(j,i);
             if(thisdist< tempdist){
                 tempdist= thisdist;
                 tempbelongsto = j;
             }
         }
-        if((*data_point_cluster)[4*i+3]!=tempbelongsto){
+        if((data_point_clusterg)[4*i+3]!=tempbelongsto){
             numchanges++;
-            (*data_point_cluster)[4*i+3]=tempbelongsto;
+            (data_point_clusterg)[4*i+3]=tempbelongsto;
         }
     }
     return numchanges;
 }
-float dist(int c,int d, int ** data_points){
+float dist(int c,int d){
     float temp=0;
     for(int i=0;i<3;i++){
-        temp += pow((currentcentroid[3*c+i]-(*data_points)[3*d+i]),2);
+        temp += pow((currentcentroid[3*c+i]-(data_pointsg)[3*d+i]),2);
     }
     return temp;
 }
-int updateCentroid(int N, int K, int ** data_points, int ** data_point_cluster){
+int updateCentroid(){
     int numchanges =0;
-    float* tempmeans = (float *)malloc(sizeof(float)*K*3);
-    int* freqmeans = (int *)malloc(sizeof(int)*K);
-    for(int i=0;i<K;i++){
+    for(int i=0;i<Kg;i++){
         for(int j=0;j<3;j++){
             tempmeans[3*i+j]=0;
         }
         freqmeans[i]=0;
     }
-    for(int i=0;i<N;i++){
-        int tempbelongsto = (*data_point_cluster)[4*i+3];
+    for(int i=0;i<Ng;i++){
+        int tempbelongsto = (data_point_clusterg)[4*i+3];
         for(int j=0;j<3;j++){
-            tempmeans[3*tempbelongsto+j]+=(*data_points)[3*i+j];
+            tempmeans[3*tempbelongsto+j]+=(data_pointsg)[3*i+j];
             freqmeans[tempbelongsto] +=1;
         }
     }
-    for(int i=0;i<K;i++){
+    for(int i=0;i<Kg;i++){
         bool shouldchange=false;
         for(int j=0;j<3;j++){
             if(freqmeans[i]!=0){
