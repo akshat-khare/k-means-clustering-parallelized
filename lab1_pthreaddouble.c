@@ -24,23 +24,18 @@ void updateCentroiddb(int K, float ** currentcentroid);
 void * classify(void *);
 float dist(int c,int d);
 int updateCentroid();
+void * plusser(void * );
+void * plusser2(void * );
 float* tempmeans;
+float** tempmeanspl;
 int* freqmeans;
+int** freqmeanspl;
 struct classifyThreadData{
     int N;
     int K;
     int ** data_points;
     int ** data_point_cluster;
 };
-float checkcorrect(){
-    float temp=0;
-    for(int i=0;i<Ng;i++){
-        for(int j=0;j<3;j++){
-            temp += pow(data_point_clusterg[4*i+j]-currentcentroid[3*(data_point_clusterg[4*i+3])+j],2);
-        }
-    }
-    return temp;
-}
 void kmeans_pthread(int num_threads,
 					int N,
 					int K,
@@ -60,6 +55,12 @@ void kmeans_pthread(int num_threads,
         data_pointsg= new int[3*N];
         tempmeans = new float[Kg*3];
         freqmeans = new int[Kg];
+        tempmeanspl = new float*[Kg];
+        freqmeanspl = new int*[Kg];
+        for(int i=0;i<Kg;i++){
+            tempmeanspl[i] = new float[3*Kg];
+            freqmeanspl[i] = new int[Kg];
+        }
         for(int i=0;i<3*N;i++){
             data_pointsg[i] = data_points[i];
         }
@@ -146,7 +147,6 @@ void kmeans_pthread(int num_threads,
         for(int i=0;i<4*N;i++){
             (*data_point_cluster)[i]=data_point_clusterg[i];
         }
-        // cout << "correctness is "<< checkcorrect()<<endl;
         return;
     }
 void updateCentroiddb(int K, float ** currentcentroidyo){
@@ -158,12 +158,9 @@ void updateCentroiddb(int K, float ** currentcentroidyo){
             float temp = (*currentcentroidyo)[3*i+j];
             // cout << "lets add "<< temp<<endl;
             // cout << "vector size is "<<centroiddatabase.size()<< " capacity is "<<centroiddatabase.capacity()<<endl;
-            // cout << temp <<" ";
             centroiddatabase.push_back(temp);
         }
-        // cout << " , ";
     }
-    // cout << endl;
 }
 void * classify(void * stid){
     // cout << "beginning" << endl;
@@ -202,6 +199,45 @@ float dist(int c,int d){
     }
     return temp;
 }
+void * plusser(void * tid){
+    int * itid = (int *)(tid);
+    int itidn = *itid;
+    int beginctr = (itidn)*(Ng/num_threadsg);
+    int endctr;
+    if(itidn!=num_threadsg-1){
+        endctr = (itidn + 1)*(Ng/num_threadsg);
+    }else{
+        endctr=Ng;
+    }
+    for(int i=beginctr;i<endctr;i++){
+        int tempbelongsto = (data_point_clusterg)[4*i+3];
+        for(int j=0;j<3;j++){
+            tempmeanspl[itidn][3*tempbelongsto+j]+=(data_pointsg)[3*i+j];
+        }
+        freqmeanspl[itidn][tempbelongsto] +=1;
+    }
+    return NULL;
+}
+void * plusser2(void * tid){
+    int * itid = (int *)(tid);
+    int itidn = *itid;
+    int beginctr = (itidn)*(Kg/num_threadsg);
+    int endctr;
+    if(itidn!=num_threadsg-1){
+        endctr = (itidn + 1)*(Kg/num_threadsg);
+    }else{
+        endctr=Kg;
+    }
+    for(int j=beginctr;j<endctr;j++){
+        for(int i=0;i<num_threadsg;i++){
+            for(int k=0;k<3;k++){
+                tempmeans[3*j+k]+= tempmeanspl[i][3*j+k];
+            }
+            freqmeans[j]+=freqmeanspl[i][j];
+        }
+    }
+    return NULL;
+}
 int updateCentroid(){
     int numchanges =0;
 
@@ -211,12 +247,37 @@ int updateCentroid(){
         }
         freqmeans[i]=0;
     }
+    for(int k=0;k<num_threadsg;k++){
+        for(int i=0;i<Kg;i++){
+            for(int j=0;j<3;j++){
+                tempmeanspl[k][3*i+j]=0;
+            }
+            freqmeanspl[k][i]=0;
+        }
+    }
     for(int i=0;i<Ng;i++){
         int tempbelongsto = (data_point_clusterg)[4*i+3];
         for(int j=0;j<3;j++){
             tempmeans[3*tempbelongsto+j]+=(data_pointsg)[3*i+j];
         }
         freqmeans[tempbelongsto] +=1;
+    }
+    pthread_t threads[num_threadsg];
+    int * tid= new int[num_threadsg];
+    for(int i=0;i<num_threadsg;i++){
+        tid[i]=i;
+        pthread_create(&threads[i],NULL, plusser,(void *)(&tid[i]));
+    }
+    for(int i=0;i<num_threadsg;i++){
+        pthread_join(threads[i],NULL);
+    }
+    
+    for(int i=0;i<num_threadsg;i++){
+        tid[i]=i;
+        pthread_create(&threads[i],NULL, plusser2,(void *)(&tid[i]));
+    }
+    for(int i=0;i<num_threadsg;i++){
+        pthread_join(threads[i],NULL);
     }
     for(int i=0;i<Kg;i++){
         bool shouldchange=false;

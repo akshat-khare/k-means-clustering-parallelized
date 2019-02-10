@@ -85,7 +85,7 @@ void kmeans_omp(int num_threads,
             tempmeanindex[i] = i;
         }
         std::srand ( unsigned ( std::time(0) ) );
-        // random_shuffle(tempmeanindex, tempmeanindex+N);
+        random_shuffle(tempmeanindex, tempmeanindex+N);
         
         for(int i=0;i<K;i++){
             for(int j=0;j<3;j++){
@@ -133,6 +133,7 @@ void kmeans_omp(int num_threads,
             (*data_point_cluster)[i]=data_point_clusterg[i];
         }
         // cout << "correctness is "<< checkcorrect()<<endl;
+        // cout << tempiter+1<<endl;
         return;
     }
 void updateCentroiddb(int K, float ** currentcentroidyo){
